@@ -1,0 +1,9 @@
+V0.1 - Initial/Proof-of-concept
+- Display prototype: 16 colour support with DOS-style display feel
+- Barebones menu system
+- 80 x 35 characters of ASCII (unicode, really) goodness
+- Number go up!
+
+V0.2 - New Render Structure
+- Changed rendering structure to be more logical
+- Scrolling! Closable windows!

@@ -1,4 +1,6 @@
 # Where things live for the game state, cabinets, properties, etc.
+# broken pending rebuild
+
 
 from pygame import Rect
 import engine, ui
