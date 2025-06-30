@@ -21,7 +21,13 @@ also this documentation is currently for my own reference so i dont have to dig 
 3. Windows:
  * Container for controls
  * Talk to grid manager to place their contents
- * 
+ * Can (eventually) be moved and resized by users
+
+4. Contents:
+ * The actual contents of a window
+ * can have functions, colours, etc. assigned
+ * multi-line text is automatically split so it displays betterer
+ * basically an object to live in a little happy zone.
 
 
 
@@ -30,13 +36,12 @@ also this documentation is currently for my own reference so i dont have to dig 
 ## GridTile
 Represents a single tile on the display grid. Contains a character, and colour information, and can optionally contain a function that can be activated.
 
-### change_char(char, fg, bg, hi, hi_bg):
+### change_char(char, fg, bg):
 Changes the displayed character and colours. All arguments are optional.
 * char: the character to display.
 * fg: Foreground colour name (see COLOURS enum)
 * bg: Background colour name
-* hi: Highlighted foreground colour name
-* hi_bg: Highlighted background colour name
+
 
 ### toggle_higlight():
 Toggles highlighted status.

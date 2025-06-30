@@ -7,3 +7,8 @@ V0.1 - Initial/Proof-of-concept
 V0.2 - New Render Structure
 - Changed rendering structure to be more logical
 - Scrolling! Closable windows!
+- Text entry, multi-line text entry!
+- Customizable window size, but not font size yet.
+- per-tick logic updated to be more easily passed to program state
+- renamed some stuff to be more about thinking of this as a UI engine rather than a game engine
+- hid your system mouse cursor, you don't need that while you're in here!!!
