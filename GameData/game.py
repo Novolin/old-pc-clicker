@@ -2,50 +2,90 @@ from pygame import Rect
 from engine import *
 from ui import *
 from GameData.windows import *
+from GameData.actors import *
 
 DAY_START = 0
 DAY_RUN = 1
 DAY_END = 2
 
+
+
 # Game-related fun stuff :)
 
 class GameData:
-    def __init__(self, parent_state, from_file = False):
+    def __init__(self, parent_state:StateManager, from_file = False):
+        # Engine stuff:
+        self.screen = parent_state
+        
         # Economy
-        self.money = 0.00
-        self.cabinets = []
+        self.money = 500.00
+        self.cabinets = [Cabinet("PARK MAN", 0.25, 0)]
         self.property = []
+        self.customers = [] # customers currently in the arcade
+
+
+
+
         # time
         self.day = 0
-        self.month = 0
+        self.month = "JAN"
         self.year = 0
         self.day_state = DAY_START
+        self.day_length = 2 * 60 * 1000 # how long in ms will a day last
+        self.day_timer = 0 # counter for day length
+        
+        
         if from_file:
             print("dunno how to load yet.")
+
+        
+
+
     def start_pre_day(self):
         # Starts the next day, opens the correct windows, etc.
+        for w in self.screen.windows:
+            w.queue_destroy()
         self.day += 1
+        
+        calwindow = CalendarWindow(self, [0,1], self.month, self.day, self.year )
+        self.screen.add_window(calwindow)
+
+        financewindow = Window(self, Rect(25,1,40,9), "FINANCES")
+        self.screen.add_window(financewindow)
+
+        cashlabel = Content([1,1], f"FUNDS: ${self.money:,.2f}")
+        financewindow.add_child(cashlabel)
+
+        cablist = Content([1,2], f"Cabinets Owned: {len(self.cabinets)}")
+        cab_details = Button([20,2], "Details...", "BLUE", "LGREY", func=DEBUG_test_windows, func_args=[self.screen])
+        financewindow.add_child(cablist)
+        financewindow.add_child(cab_details)
+        startdaywindow = Window(self, Rect(1,12,70, 10), "")
+        start_day_button = Button([30,2], "START DAY")
+
+        startdaywindow.add_child(start_day_button)
+        self.screen.add_window(startdaywindow)
+
+
+
+    def start_day(self):
+        self.day_state = DAY_RUN
+        # now we do the real calculations
+
+    def tick_day_logic(self):
+        # Don't worry about frame rate
+        pass
 
 
 class GameState(StateManager):
     # Specifically for my arcadey game thing.
     def __init__(self, grid: GridManager) -> None:
         super().__init__(grid)
-        self.game_data = []
-        
-        self.test_var = 0
-        self.test_dir = 0
-        self.target = 300 # should be 5 seconds worth of time.
-        self.bar = None
+        self.game_data = GameData(self)
         self.boot()
 
     def unhandled_input(self, key):
-        if key == pygame.K_f:
-            self.test_var += 5
-            if self.test_var > self.target:
-                self.test_var = 0
-            if self.bar:
-                self.bar.set_value(self.test_var)
+        pass
                 
                 
 
@@ -66,52 +106,36 @@ class GameState(StateManager):
         self.add_menu(filemenu)
     
 
-        hellowindow = Window(Rect(10,15,40, 10), "")
+        optionsmenu = Menu("OPTIONS", 0)
+        textsize = MenuItem(optionsmenu, "Text Size", 0, print, ["Not Implemented Yet :("])
+        optionsmenu.add_child(textsize)
+
+        self.add_menu(optionsmenu)
+
+        hellowindow = Window(self,Rect(5,5,40, 10), "")
         hello_text = Content([5,2], "WELCOME TO THE THING I GUESS")
         hellowindow.add_child(hello_text)
         self.add_window(hellowindow)
-        self.DEBUG_draw_cool_windows()
+        
 
     def program_logic(self, delta):
-        if self.bar:
-            self.test_var += 1 
-            if self.test_var > self.target + 100:
-                self.test_var = 0
-            self.bar.set_value(self.test_var)
+        if self.game_data.day_state == DAY_RUN:
+            pass # Tick the logic
             
                 
+    def start_new_game(self):
+        self.game_data = GameData(self)
+        self.game_data.start_pre_day()
 
-
-
-    def DEBUG_draw_cool_windows(self):
-        self.windows = []
-        # Draws a handful of windows to test stuff
-        cal = CalendarWindow([1,1], "JAN", 20, 1)
-        data_window = Window(Rect(cal.area.right + 1, cal.area.top, 20,14), "data testin", allow_scroll= True)
-        pbar = ProgressBar([1,0], 10, self.test_var, self.target)
-        data_window.add_child(pbar)
-        some_text = Content([1,1], "PROGRESS BAR")
-        data_window.add_child(some_text)
-        text_entry = TextEntry([1,3], 10, 1, self, "placeholder", 10, bg = "LBLUE")
-        data_window.add_child(text_entry)
-        ent_label = Content([1,4], "TEXT ENTERER")
-        data_window.add_child(ent_label)
-        mline = TextEntry([1,5], 10, 4, self, "MLINE", bg = "YELLOW", fg = "BLACK")
-        data_window.add_child(mline)
-        self.add_window(cal)
-        self.add_window(data_window)
-        self.bar = pbar
-        scrollwindow = Window(Rect(1,11,10,5), "SCROLL TEST", "RED", "LRED", allow_scroll = True, show_close= True)
-        a_thing = Content([1,0], "one\ntwo\nthree\nfour\nfive\nsix\nseven\neight\nnine\nten")
-        scrollwindow.add_child(a_thing)
-        self.add_window(scrollwindow)
 
 
 
 def open_new_game_menu(state_target:GameState):
     # Opens the new game menu
     center = [state_target.grid_size[0] // 2, state_target.grid_size[1] // 2]
-    newgame = ConfirmWindow(Rect(center[0] - 18,center[1] -4,35,6), "START NEW GAME?", "Start a new game?\nUnsaved progress will be lost!", state_target.DEBUG_draw_cool_windows) 
+    newgame = ConfirmWindow(state_target, Rect(center[0] - 18,center[1] -4,35,6), "START NEW GAME?", "Start a new game?\nUnsaved progress will be lost!", state_target.start_new_game) 
 
     state_target.add_window(newgame)
+
+
 

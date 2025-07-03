@@ -44,6 +44,7 @@ The Infobar (bottom text line) will always be rendered on top, and will not allo
 - Working multi-line text
 - check boxes
 - radio buttons
+- drop dowm menus
 - sliders
 - dividers for windows
 - menu bar submenus

@@ -4,7 +4,7 @@ from pygame import Rect
 from ui import *
 
 class CalendarWindow(Window):
-    def __init__(self, location, month:str, day:int, year:int, size = [24, 9], fg=None, bg=None, hi=None, hi_bg=None):
+    def __init__(self, parent, location, month:str, day:int, year:int, size = [24, 9], fg=None, bg=None, hi=None, hi_bg=None):
         self.month_list = {
             "JAN":31,
             "FEB":28,
@@ -26,7 +26,7 @@ class CalendarWindow(Window):
         self.day_offset = 0
         self.get_start_offset()
         title = f"{month}, Year {self.year}"
-        super().__init__(Rect(location, size), title, fg, bg, hi, hi_bg, allow_scroll= False)
+        super().__init__(parent, Rect(location, size), title, fg, bg, hi, hi_bg, allow_scroll= False)
         self.build_window()
 
     def get_start_offset(self):
@@ -67,6 +67,6 @@ class PropertyMap(Window):
         pass
 
 class FinanceInfo(Window):
-    def __init__(self, area: Rect = Rect(24,1,26,9)):
-        super().__init__(area, "FINANCES")
+    def __init__(self, parent, area: Rect = Rect(24,1,26,9)):
+        super().__init__(parent, area, "FINANCES")
         # build the content, also pass data to it i guess.

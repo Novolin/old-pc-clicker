@@ -12,3 +12,6 @@ V0.2 - New Render Structure
 - per-tick logic updated to be more easily passed to program state
 - renamed some stuff to be more about thinking of this as a UI engine rather than a game engine
 - hid your system mouse cursor, you don't need that while you're in here!!!
+
+V0.2.1 - Some Small Additions:
+- Added a text prompt window type

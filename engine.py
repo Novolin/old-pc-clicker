@@ -486,7 +486,7 @@ class StateManager:
         # Check if we are hovering on a control, and if that control wants to highlight on hover
         for w in self.windows:
             for control in w.children:
-                if control.hi_on_hover and w.get_child_absolute_position(control).collidepoint(self.cursor.position):
+                if control.hi_on_hover and control.absolute_area.collidepoint(self.cursor.position):
                     control.highlighted = True
                 else:
                     control.highlighted = False

@@ -266,12 +266,14 @@ class Content:
         for line in range(len(self.text_lines)):
             while len(self.text_lines[line]) < width:
                 self.text_lines[line] += " "
+        
         self.area = Rect(location[0], location[1], width, height)
         self.absolute_area = self.area.copy()
 
     def set_parent(self, new_parent):
         self.parent_control = new_parent
         self.absolute_area.move_ip(new_parent.area.topleft)
+        self.absolute_area.move_ip(1,1)
 
 
     def tick(self, delta):
@@ -407,7 +409,6 @@ class TextEntry(Content):
         # Focus on the entry box.
         abs_cursor_loc = self.state_control.cursor.position
         cursor_location = [ abs_cursor_loc[0] - self.absolute_area.left -1, abs_cursor_loc[1] - self.absolute_area.top -1]
-        print(cursor_location)
         if not self.focused:
             self.focused = True
             self.state_control.set_input_target(self)
@@ -522,23 +523,35 @@ class TextEntry(Content):
                     self.text_cursor_pos -= 1
                 self.align_cursor_pos()
             
+    def clear(self):
+        # Clears the contents of the box.
+        self.text_as_str = ""
+        self.refresh_contents()
         
-
+class CheckBox(Content): #TODO
+    def __init__(self, location: list | tuple, text, tied_var = None, start_selected = False, fg=None, bg=None, hi=None, hi_bg=None) -> None:
+        self.checkbox_text = "[ ]"
+        
+        super().__init__(location, text, fg, bg, hi, hi_bg)
+        self.selected  = start_selected
+        
 
 
         
 class SelectMenu(Content):
-    # One of those spinny menu things
-    def __init__(self, location, text: str, fg=None, bg=None, hi=None, hi_bg=None) -> None:
-        super().__init__(location, text, fg, bg, hi, hi_bg)
+    # A menu to select multiple items
+    def __init__(self, location, items:list, fg=None, bg=None, hi=None, hi_bg=None) -> None:
+        
+        super().__init__(location, "test", fg, bg, hi, hi_bg)
 # Window object
 
 class Window:
-    def __init__(self, area:Rect, title, fg = None, bg = None, hi = None, hi_bg = None, border = "LGREY", show_close = False, allow_scroll = False, always_on_top = False):
+    def __init__(self, parent, area:Rect, title, fg = None, bg = None, hi = None, hi_bg = None, border = "LGREY", show_close = False, allow_scroll = False, always_on_top = False):
         self.area = area
         self.viewport = Rect(0,0,self.area.width -2, self.area.height - 2)
         self.children = []
         self.full_content_area = self.viewport.copy() # at the start, assume everything fits the window area.
+        self.parent = parent
 
         self.visible = True
         self.always_on_top = always_on_top
@@ -551,7 +564,7 @@ class Window:
         self.h_scroll_bar = None
         self.allow_scroll = allow_scroll
 
-
+        # looks:
         self.title = title
         self.fg = fg
         self.bg = bg
@@ -582,9 +595,6 @@ class Window:
 
     def scroll_view(self, x:int = 0, y:int = 0):
         # scrolls the view by x, y amounts
-        print(y)
-        print(self.viewport.topleft, self.viewport.bottomright)
-        print(self.full_content_area.topleft, self.full_content_area.bottomright)
         self.viewport.move_ip(x, y)
         if self.viewport.bottom > self.full_content_area.bottom:
             self.viewport.move_ip(0,-1)
@@ -603,11 +613,12 @@ class Window:
 
 
 
-    def exec_and_destroy(self, func, list_of_args:list = []):
+    def exec_and_destroy(self, func, args:list = []):
         # Use this if a button or something needs to call a function, but also set this window to be destroyed.
-        # first entry in func_as_list should be the function, the rest is args.
-
-        func(*list_of_args)
+        if type(args) != list:
+            func(args)
+        else:
+            func(*args)
         self.queue_destroy() # do this last since it purges the child list.
 
 
@@ -680,10 +691,10 @@ class Window:
 class ConfirmWindow(Window):
     # A window with an ok/cancel button situation going on
     # TODO: when active, make "RETURN" and "ESCAPE" do OK/CANCEL, respectively.
-    def __init__(self, area: Rect, title:str, prompt:str, confirm_func, confirm_args:list|None = None, cancel_func = None, cancel_args:list|None = None, fg = None, bg = None, border="LGREY", show_close=False, allow_scroll=False, always_on_top=True):
-        super().__init__(area, title, border, show_close, allow_scroll, always_on_top)
+    def __init__(self, parent, area: Rect, title:str, prompt:str, confirm_func, confirm_args:list|None = None, cancel_func = None, cancel_args:list|None = None, fg = None, bg = None, border="LGREY", show_close=False, allow_scroll=False, always_on_top=True):
+        super().__init__(parent,area, title, border, show_close, allow_scroll, always_on_top)
         # Get some measurements:
-        ok_location = (self.area.width // 4) - 2 # 1/4 of the window, centering text
+        ok_location = (self.area.width // 4) - 1 # 1/4 of the window, centering text
         cancel_location = ok_location + (self.area.width // 2) - 2 # 3/4 of the window, centered
         prompt_list = prompt.splitlines()
         linecount = 0
@@ -696,12 +707,51 @@ class ConfirmWindow(Window):
         ok_funcs.append(confirm_func)
         if confirm_args:
             ok_funcs += confirm_args
-        ok_button = Button([ok_location, linecount + 2], "[OK]", "WHITE", "GREEN", "GREEN", "BLACK", self.exec_and_destroy, ok_funcs, True)
+        ok_button = Button([ok_location, linecount + 2], "OK", "WHITE", "GREEN", "GREEN", "BLACK", self.exec_and_destroy, ok_funcs, True)
         if cancel_func == None:
             cancel_func = self.queue_destroy
-        cancel_button = Button([cancel_location, linecount + 2], "[CANCEL]", "WHITE", "RED", "RED", "BLACK", func = cancel_func,func_args=cancel_args, highlight_on_hover=True)
+        cancel_button = Button([cancel_location, linecount + 2], "CANCEL", "WHITE", "RED", "RED", "BLACK", func = cancel_func,func_args=cancel_args, highlight_on_hover=True)
 
         self.add_child(ok_button)
         self.add_child(cancel_button)
 
 
+class TextEntryWindow(Window):
+    # A generic window you can use to prompt a user with
+    def __init__(self, parent, area: Rect, title, prompt:str, confirm_func,  cancel_func = None, cancel_args:list|None = None, default_text:str = "", fg=None, bg=None, hi=None, hi_bg=None, border="LGREY", show_close=False, always_on_top=False):
+        super().__init__(parent,area, title, border, show_close, always_on_top)
+        # Get some measurements:
+        ok_location = (self.area.width // 4) - 1 # 1/4 of the window, centering text
+        cancel_location = ok_location + (self.area.width // 2) - 2 # 3/4 of the window, centered
+        prompt_list = prompt.splitlines()
+        linecount = 0
+        for line in prompt_list:
+            # Center the text per line:
+            linecount += 1
+            text_content = Content([self.area.width//2 - len(line)//2, linecount], line, fg = fg, bg = bg)
+            self.add_child(text_content)
+
+        self.confirm_func = confirm_func
+        ok_button = Button([ok_location, linecount + 3], "OK", "WHITE", "GREEN", "GREEN", "BLACK", self.submit_text, highlight_on_hover=True)
+        if cancel_func == None:
+            cancel_func = self.queue_destroy
+        cancel_button = Button([cancel_location, linecount + 3], "CANCEL", "WHITE", "RED", "RED", "BLACK", func = cancel_func,func_args=cancel_args, highlight_on_hover=True)
+
+        self.add_child(ok_button)
+        self.add_child(cancel_button)
+
+        self.text_prompt = TextEntry([2, linecount + 1], self.area.width - 4, 1, self.parent, default_text, fg = "BLACK", bg = "LGREY")
+        
+        self.add_child(self.text_prompt)
+        
+    def submit_text(self):
+        entered_text = self.text_prompt.text_as_str
+        self.exec_and_destroy(self.confirm_func, [entered_text])
+
+
+def DEBUG_test_windows(state):
+    # opens a bunch of windows to test things
+    test_test = TextEntryWindow(state, Rect(1,1,40,8), "TEXT ENTRY", "test text entry", print)
+    conf_test = ConfirmWindow(state, Rect(1,11,10,10), "CONFIRM", "CONFIRM?", print, ["CONFIRMED!"], print, ["CANCELED!", "NO!"])
+    state.add_window(test_test)
+    state.add_window(conf_test)
