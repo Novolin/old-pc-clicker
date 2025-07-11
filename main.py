@@ -12,9 +12,10 @@ clock = pygame.time.Clock()
 _delta = 0 # ms since last frame change
 
 # Grid, state managers:
-grid = GridManager(80,26)
+grid = GridManager(80,30)
 state = GameState(grid)
 screen = pygame.display.set_mode(grid.surface.get_size())
+state.set_display_target(screen)
 
 pygame.mouse.set_visible(False)
 

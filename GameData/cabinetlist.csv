@@ -1,27 +1,26 @@
-NAME, DESCRIPTION, RELEASE DATE, TYPE, PLAYERS
-Park Man, "A little yellow ghost has to evade monsters in a maze, while gobbling up dots", 0, MAZE, 1
-King Mule
-Streets
-Topper
-Chicken Road
-Offender
-TROM
-Demon's Lair
-Tonio Bros.
-Hold-On!
-Pocono USA
-Zombotron 2044
-BurgO'Clock
-Ladybird
-Doug Digs
-Fight Finale
-Lord of Brawlers
-Steel Snail
-Millipede
-Bracer
-Lucifer's Bridge
-Spy Haunter
-Virtua Crop
-Tubing
-Green Masters
-Big Duck Hunter
+Park Man; "A little yellow ghost has to evade monsters in a maze, while gobbling up dots";0;MAZE;1
+King Mule; "A Greek pipefitter has to rescue his girlfriend from a construction site";0;PLATFORM;1
+Streets; "Two-player kung-fu action! More exciting than water with ice!";0;FIGHTING;2
+Topper;"Serve customers at the town's only gay bar!";20;ACTION;1
+Chicken Road;"Can you make it to the other side? Do you know why?";20;MAZE;1
+Offender;"Save the edgy comedians from the horrible roboy menace!";40;ACTION;1
+TROM;"It's like a fighting game, but with motorcycles.";50;ACTION;2
+Demon's Lair;"Guide your knight through an evil castle filled with monsters.";55;PUZZLE;1
+Tonio Bros.;"Two greek pipefitters fight against the creatures of the underworld";70;PLATFORM;2
+Hold-On!;"Race your motorcycles at wholly unreasonable speed!";75;RACING;1
+Pocono USA;"Try to Tackle the Tricky Triangle!";90;RACING;1
+Zombotron 2044;"Rescue the humans from the zombies that have taken over the dystopian future!";110;ACTION;1
+BurgO'Clock;"Flatten your foes with this nasty chef that walks on top of the buns. Yuck.";35;PLATFORM;1
+Ladybird;"You know what Park Man needs? Revolving doors!";30;MAZE;1
+Doug Digs;"Pump up the crazy critters as you excavate your own mine!";80;MAZE;1
+Fight Finale;"Make your way through the city to save the mayor from his assault case!";100;FIGHTING;2
+Lord of Brawlers;"Can you beat every opponent and become the TRUE LORD OF FIGHTS??";140;FIGHTING;2
+Steel Snail;"Rescue prisoners, shoot bad guys, spread imperialism through the third world!";92;SHOOTER;1
+Millipede;"Shoot a nasty bug as it craws towards you. ick.";10;ACTION;1
+Bracer;"Team up in this fantasy dungeon crawler. Needs snacks, desperately!";107;ACTION;4
+Lucifer's Bridge;"Can you make your way across the bridge guarded by the devil himself?";44;ACTION;1
+Spy Haunter;"Navigate a busy highway and posess the cars of your enemies.";110;RACING;1
+Virtua Crop;"Blast the crows, bugs and poachers inhabiting your farm";120;SHOOTER;1
+Tubing;"Float down a lazy river, avoiding trash, branches and all kinds of fish.";58;MAZE;1
+Green Masters;"Can you get the high score, by getting the low score?";72;SPORT;2
+Big Duck Hunter;"Feed your family by blasting ducks right out of the air!";12;SHOOTER;1

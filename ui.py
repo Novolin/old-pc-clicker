@@ -255,7 +255,8 @@ class Content:
         self.highlighted = False
         self.handles_raw_text = False  # Can we pass a TextInput command to it. Only for controls that handle typed input.
         self.parent_control = None
-
+        self.queue_destroy = False # do we want to remove this object from its parent's list of children?
+        self.raw_text = text
         self.text_lines = text.splitlines()
         width = 0
         height = 0
@@ -276,6 +277,7 @@ class Content:
         self.absolute_area.move_ip(1,1)
 
 
+
     def tick(self, delta):
         pass # use this func for things that need to get a time variable passed to them
 
@@ -284,6 +286,7 @@ class Content:
         if new_loc != None:
             self.area.update(new_loc, self.area.size)
         if new_text and type(self.area) == Rect:
+            self.raw_text = new_text
             self.text_lines = new_text.splitlines()
             text_len = 0
             for line in new_text.splitlines():
@@ -535,9 +538,24 @@ class CheckBox(Content): #TODO
         super().__init__(location, text, fg, bg, hi, hi_bg)
         self.selected  = start_selected
         
+class ColourBlock(Content):
+    # A block of colour, for decoration only.
+    def __init__(self, area:Rect, fill_char: str = " ", fg=None, bg=None) -> None:
+        fulltext = ((fill_char[0] * area.width) + "\n") * area.height
+        self.fill_char = fill_char
+        super().__init__(area.topleft, fulltext, fg, bg, bg, fg)
 
-
+    def change_fill_char(self, new_char:str, new_fg = None, new_bg = None):
+        self.fill_char = new_char
+        fulltext = ((new_char[0] * self.area.width) + "\n") * self.area.height
+        self.update(new_text = fulltext, fg = new_fg, bg = new_bg)
         
+
+    def change_size(self, new_area:Rect):
+        fulltext = ((self.fill_char[0] * new_area.width) + "\n") * new_area.height
+        self.update(new_area.topleft, fulltext)
+
+
 class SelectMenu(Content):
     # A menu to select multiple items
     def __init__(self, location, items:list, fg=None, bg=None, hi=None, hi_bg=None) -> None:
@@ -573,8 +591,6 @@ class Window:
         self.border = border
 
 
-        self.DEBUG_FUNCTIONS = False
-
 
     def add_child(self, child:Content):
         self.children.append(child)
@@ -582,9 +598,9 @@ class Window:
         if child.area.bottom > self.viewport.bottom and self.allow_scroll:
             self.full_content_area.update(self.full_content_area.left, self.full_content_area.top, self.full_content_area.width, child.area.bottom)
             if self.v_scroll_bar:
-                self.v_scroll_bar.update_size(self.full_content_area.bottom)
+                self.v_scroll_bar.update_size(self.full_content_area.bottom - 1)
             else:
-                self.v_scroll_bar = ScrollBar(self.area.height - 2, self.full_content_area.bottom, self.viewport.height)
+                self.v_scroll_bar = ScrollBar(self.area.height - 2, self.full_content_area.bottom - 1, self.viewport.height)
         if child.area.right > self.area.right and self.allow_scroll:
             self.full_content_area.update(self.full_content_area.left, self.full_content_area.top, child.area.right, self.full_content_area.height)
             if self.h_scroll_bar:
@@ -625,14 +641,18 @@ class Window:
 
     def draw(self, target_grid, delta):
         # Draws the window and its contents to the given grid manager
-
+        # make sure all of our children want to exist:
+        for child in self.children:
+            if child.queue_destroy:
+                self.children.remove(child)
+                
         
         # start with a blank square
-        target_grid.draw_square(self.area, " ", self.fg, self.bg)
+        target_grid.draw_square(self.area, " ", self.fg, self.bg, highlighted = False)
         # Borders:
-        target_grid.draw_hline(self.area.topleft, self.area.width, self.border, self.bg)
-        target_grid.draw_hline(self.area.bottomleft, self.area.width, self.border, self.bg)
-        target_grid.draw_vline(self.area.topleft, self.area.height, self.border, self.bg)
+        target_grid.draw_hline(self.area.topleft, self.area.width + 1, self.border, self.bg)
+        target_grid.draw_hline(self.area.bottomleft, self.area.width + 1, self.border, self.bg)
+        target_grid.draw_vline(self.area.topleft, self.area.height + 1, self.border, self.bg)
         if self.v_scroll_bar and self.v_scroll_bar.visible:
             for i in range(self.v_scroll_bar.bar_size):
                 if i == 0:
@@ -642,12 +662,16 @@ class Window:
             target_grid.set_char(self.area.right, self.area.top + self.v_scroll_bar.bar_size + 1, self.v_scroll_bar.astext[-1], self.border, self.bg, func= self.scroll_view, func_args = [0,1])
                     
         else:
-            target_grid.draw_vline(self.area.topright, self.area.height, self.border)
+            target_grid.draw_vline(self.area.topright, self.area.height, self.border, self.bg)
         # corners:
         target_grid.set_char(self.area.left, self.area.top, DRAWTILES["topleft"], self.border, self.bg)
+        target_grid.get_tile(self.area.left, self.area.top).clear_function()
         target_grid.set_char(self.area.left, self.area.bottom, DRAWTILES["bottomleft"], self.border, self.bg)
+        target_grid.get_tile(self.area.left, self.area.bottom).clear_function()
         target_grid.set_char(self.area.right, self.area.top, DRAWTILES["topright"], self.border, self.bg)
+        target_grid.get_tile(self.area.right, self.area.top).clear_function()
         target_grid.set_char(self.area.right, self.area.bottom, DRAWTILES["bottomright"], self.border, self.bg)
+        target_grid.get_tile(self.area.right, self.area.bottom).clear_function()
 
         # Title bar:
         if len(self.title) > self.area.width - 4:
@@ -657,7 +681,7 @@ class Window:
         target_grid.write_string(draw_title, [self.area.left + 1, self.area.top], self.border, self.bg)
 
         if self.show_close:
-            target_grid.set_char(self.area.right - 1, self.area.top, "X", fg = "RED", func = self.queue_destroy)
+            target_grid.set_char(self.area.right - 1, self.area.top, "X", fg = "RED", bg = "GREY", func = self.queue_destroy)
 
         # Contents:
         
@@ -669,9 +693,10 @@ class Window:
             for y_range in range(child.area.height):
                 if child_start_y + y_range < self.area.bottom and child_start_y + y_range > self.area.top:
                     # Only print within the window area
-                    for x_range in range(child.area.width):
+                    for x_range in range(len(child.text_lines[y_range])):
                         if child_start_x + x_range < self.area.right and child_start_x + x_range> self.area.left:
                             if child.highlighted:
+                                
                                 target_grid.set_char(child_start_x + x_range, child_start_y + y_range, 
                                                  child.text_lines[y_range][x_range], 
                                                  child.hi, child.hi_bg, child.func, child.func_args
@@ -687,6 +712,8 @@ class Window:
         self.children = []
         self.destroy = True
 
+    def clear_contents(self):
+        self.children = []
 
 class ConfirmWindow(Window):
     # A window with an ok/cancel button situation going on

@@ -30,7 +30,7 @@ DRAWTILES = {
     "ttop":"\u2566",
     "tleft":"\u2560",
     "tright":"\u2563",
-    "tbottom":"\u2559",
+    "tbottom":"\u2569",
     "tcenter":"\u256C",
     "lightfill":"\u2591",
     "medfill":"\u2592",
@@ -39,7 +39,19 @@ DRAWTILES = {
     "prog100":"\u2588" # Basically a soace but with the foreground colour.
     }
 
-
+BOXTILES = {
+    "topleft":"\u2554",     # ╔
+    "topright":"\u2557",    # ╗
+    "bottomleft":"\u255A",  # ╚
+    "bottomright":"\u255D", # ╝
+    "vertical":"\u2551",    # ║
+    "horizontal":"\u2550",  # ═
+    "ttop":"\u2566",        # ╦
+    "tleft":"\u2560",       # ╠
+    "tright":"\u2563",      # ╣
+    "tbottom":"\u2569",     # ╩
+    "tcenter":"\u256C"      # ╬
+}
     
 
 
@@ -130,10 +142,6 @@ class GridTile:
 
     def cursor_state(self, new_state):
         self.cursor_hi = new_state
-
-    def toggle_highlight(self)-> bool:
-        self.highlighted = not self.highlighted
-        return self.highlighted
     
     def set_function(self, new_func = None, new_args = None)-> None:
         if new_func:
@@ -162,8 +170,11 @@ class GridTile:
 
 
 class GridManager:
-    def __init__(self, columns, rows) -> None:
-        self.font = pygame.font.Font("ibmfont.ttf", 32) # Default font.
+    def __init__(self, columns, rows,  size = 32) -> None:
+        self.font_size = size
+
+
+        self.font = pygame.font.Font("fonts/MxPlus_IBM_VGA_9x16.ttf", size)
         self.tile_size = self.font.size(" ")
         self.columns = columns
         self.rows = rows
@@ -230,7 +241,7 @@ class GridManager:
 
     def draw_square(self, area:pygame.Rect, 
                     char:str|None = None, fg:str|None = None, bg:str|None = None, 
-                    func = None, func_args:list|tuple|None = None):
+                    func = None, func_args:list|tuple|None = None, highlighted:bool = False):
         # Draws a square, and sets the assigned function. If function/arguments are None, the function is cleared.
 
 
@@ -249,6 +260,7 @@ class GridManager:
                     # Reset the function:
                     tile.clear_function()
                     tile.set_function(func, func_args)
+                    tile.highlighted = highlighted
 
     def set_char(self, x:int, y:int, char:str, fg:str|None = None, bg:str|None = None, func = None, func_args:list|tuple|None = None, clear_old_func = True):
         # Sets the individual grid square's character, and/or the function assigned to it:
@@ -287,16 +299,32 @@ class GridManager:
                 self.grid[self.columns - len(right_text) + char_index][self.rows - 1].change_char(right_text[char_index])
             char_index += 1
 
-    def draw_hline(self, start, width, fg = None, bg = None, hi = None, hi_bg = None, char = DRAWTILES["horizontal"]):
+    def draw_hline(self, start, width, fg = None, bg = None, hi = None, hi_bg = None, char = DRAWTILES["horizontal"], func = None, func_args = None):
         # Draws a horizontal line
         for i in range(width):
-            self.grid[start[0] + i][start[1]].change_char(char, fg, bg)
+            next_tile = self.grid[start[0] + i][start[1]]
+            next_tile.change_char(char, fg, bg)
+            
+            if func and func_args:
+                next_tile.set_func(func, func_args)
+            elif func:
+                next_tile.clear_function(True) # just clear the args
+            else:
+                next_tile.clear_function()
         
 
-    def draw_vline(self, start, height, fg = None, bg = None, hi = None, hi_bg = None, char = DRAWTILES["vertical"]):
+    def draw_vline(self, start, height, fg = None, bg = None, hi = None, hi_bg = None, func = None, func_args = None, char = DRAWTILES["vertical"], connect_lines = True):
         # Draws a vertical line
         for i in range(height):
-            self.grid[start[0]][start[1] + i].change_char(char, fg, bg)
+            next_tile = self.grid[start[0]][start[1] + i]
+            next_tile.change_char(char, fg, bg)
+            # function stuff
+            if func and func_args:
+                next_tile.set_func(func, func_args)
+            elif func:
+                next_tile.clear_function(True) # just clear the args
+            else:
+                next_tile.clear_function()
         
 
     def blank(self):
@@ -324,6 +352,10 @@ class GridManager:
                 self.surface.blit(tsurf, [self.tile_size[0] * col, self.tile_size[1] * row])
         return self.surface
 
+    def change_font(self, size):
+        # Changes the size, or toggles font type
+        self.font_size = size
+        self.font = pygame.font.Font("fonts/MxPlus_IBM_VGA_9x16.ttf", size)
 # State/interactables:
 
 class StateManager:
@@ -338,7 +370,21 @@ class StateManager:
         self.key_mode = 0
         self.run = True # Do we kill the process?
         self.input_target = None # What object are we targeting keyboard inputs to?
-        
+        self.display_target = None 
+
+
+    # Display:
+    def set_display_target(self, new_target):
+        self.display_target = new_target
+
+    def force_screen_refresh(self):
+        # Forces a screen redraw. Used for loading screens primarily, but you can do it for fucked up logic stuff i guess
+        # Doesn't update the physics/time delta!!!!
+        if self.display_target == None:
+            return # can't do that with one of these!!!
+        self.display_target.fill((0,0,0)) # Fill with black
+        self.display_target.blit(self.grid.update_screen(self), [0,0])
+        pygame.display.flip() # flip the display asap
 
     # Windows:
 
@@ -488,7 +534,7 @@ class StateManager:
             for control in w.children:
                 if control.hi_on_hover and control.absolute_area.collidepoint(self.cursor.position):
                     control.highlighted = True
-                else:
+                elif control.hi_on_hover:
                     control.highlighted = False
                 
     def release_input_target(self):
